@@ -76,7 +76,7 @@ function WorkoutDetail() {
           {workout.tips.map((tip, i) => <li key={i}>{tip}</li>)}
         </ul>
 
-        {/* Нова кнопка — зберігає в історію */}
+        {/* зберігає в історію */}
         <button
           onClick={handleBtn}
           style={{ ...s.startBtn, backgroundColor: btnColor[status] }}

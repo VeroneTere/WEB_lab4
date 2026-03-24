@@ -1,9 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 
-// Створюємо контекст
 const WorkoutContext = createContext();
 
-// Провайдер — огортає весь додаток
 export function WorkoutProvider({ children }) {
   const [history, setHistory] = useState([]);
 
@@ -16,7 +14,6 @@ export function WorkoutProvider({ children }) {
       type: workout.type,
       calories: workout.calories,
       time: workout.time,
-      // Дата і час виконання
       completedAt: now.toLocaleString('uk-UA', {
         day: '2-digit',
         month: '2-digit',
@@ -44,7 +41,6 @@ export function WorkoutProvider({ children }) {
   );
 }
 
-// Хук для зручного використання
 export function useWorkoutHistory() {
   return useContext(WorkoutContext);
 }

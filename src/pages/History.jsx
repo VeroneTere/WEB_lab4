@@ -1,14 +1,20 @@
-import { Link } from 'react-router-dom';
+// src/pages/History.jsx
+import { Navigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useWorkoutHistory } from '../context/WorkoutContext';
 
 function History() {
+  const { user } = useAuth();
   const { history } = useWorkoutHistory();
 
-  // Підраховуємо загальну статистику
+  // Захищена сторінка
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   const totalCal = history.reduce((s, r) => s + r.calories, 0);
   const totalMin = history.reduce((s, r) => s + r.time, 0);
 
-  // Групуємо по датах
   const grouped = history.reduce((acc, rec) => {
     const date = rec.completedDate;
     if (!acc[date]) acc[date] = [];
@@ -25,18 +31,15 @@ function History() {
 
   return (
     <section style={{ padding: '40px 5%' }}>
-
-      {/* Заголовок */}
       <div style={{ textAlign: 'center', marginBottom: '35px' }}>
         <h2 style={{ fontSize: '2rem', color: '#4a148c', margin: 0 }}>
-          Історія тренувань
+          Мої тренування
         </h2>
         <p style={{ color: '#666', marginTop: '8px' }}>
-          Всі виконані тренування з датою та часом
+          Особистий журнал — {user.email}
         </p>
       </div>
 
-      {/* Якщо порожньо */}
       {history.length === 0 ? (
         <div style={s.emptyBox}>
           <p style={{ fontSize: '3rem', margin: 0 }}>🏋️</p>
@@ -44,11 +47,9 @@ function History() {
             Ще немає виконаних тренувань
           </h3>
           <p style={{ color: '#888', margin: '0 0 20px' }}>
-            Перейди до тренувань і натисни кнопку «Почати»
+            Перейди до тренувань і натисни «Почати»
           </p>
-          <Link to="/" style={s.goBtn}>
-            → Перейти до тренувань
-          </Link>
+          <Link to="/" style={s.goBtn}>→ До тренувань</Link>
         </div>
       ) : (
         <>
@@ -72,19 +73,15 @@ function History() {
             </div>
           </div>
 
-          {/* Записи згруповані по датах */}
+          {/* По датах */}
           {Object.entries(grouped).map(([date, recs]) => (
             <div key={date} style={{ marginBottom: '30px' }}>
-
-              {/* Заголовок дати */}
               <div style={s.dateHeader}>
                 <span>📅 {date}</span>
                 <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
                   {recs.length} тренувань · {recs.reduce((s, r) => s + r.calories, 0)} ккал
                 </span>
               </div>
-
-              {/* Картки записів */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {recs.map(rec => {
                   const tc = typeColors[rec.type] || { bg: '#f3e5f5', text: '#4a148c' };
@@ -99,7 +96,7 @@ function History() {
                           <p style={s.recTime}>🕐 Виконано о {rec.completedTime}</p>
                         </div>
                       </div>
-                      <div style={s.recRight}>
+                      <div style={{ display: 'flex', gap: '10px' }}>
                         <span style={s.recStat}>⏱ {rec.time} хв</span>
                         <span style={s.recStat}>🔥 {rec.calories} ккал</span>
                       </div>
@@ -109,12 +106,8 @@ function History() {
               </div>
             </div>
           ))}
-
-          {/* Кнопка очистити */}
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <Link to="/" style={s.goBtn}>
-              + Додати ще тренування
-            </Link>
+            <Link to="/" style={s.goBtn}>+ Додати тренування</Link>
           </div>
         </>
       )}
@@ -123,107 +116,19 @@ function History() {
 }
 
 const s = {
-  emptyBox: {
-    textAlign: 'center',
-    padding: '60px 20px',
-    background: 'white',
-    borderRadius: '20px',
-    boxShadow: '0 4px 15px rgba(74,20,140,0.08)',
-    maxWidth: '500px',
-    margin: '0 auto'
-  },
-  goBtn: {
-    display: 'inline-block',
-    backgroundColor: '#4a148c',
-    color: 'white',
-    padding: '12px 28px',
-    borderRadius: '12px',
-    fontWeight: 'bold',
-    fontSize: '0.95rem'
-  },
-  statsRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '15px',
-    marginBottom: '35px'
-  },
-  statCard: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '14px',
-    textAlign: 'center',
-    boxShadow: '0 4px 12px rgba(74,20,140,0.08)'
-  },
-  statNum: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#4a148c',
-    margin: 0
-  },
-  statLabel: {
-    fontSize: '0.8rem',
-    color: '#888',
-    margin: '5px 0 0'
-  },
-  dateHeader: {
-    backgroundColor: '#4a148c',
-    color: 'white',
-    padding: '10px 18px',
-    borderRadius: '10px',
-    fontWeight: 'bold',
-    marginBottom: '12px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '0.95rem'
-  },
-  recCard: {
-    background: 'white',
-    padding: '16px 20px',
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(74,20,140,0.07)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '10px'
-  },
-  recLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    flex: 1
-  },
-  typeTag: {
-    padding: '4px 12px',
-    borderRadius: '20px',
-    fontSize: '0.75rem',
-    fontWeight: 'bold',
-    whiteSpace: 'nowrap'
-  },
-  recTitle: {
-    margin: 0,
-    fontWeight: 'bold',
-    color: '#311b92',
-    fontSize: '0.95rem'
-  },
-  recTime: {
-    margin: '3px 0 0',
-    color: '#888',
-    fontSize: '0.82rem'
-  },
-  recRight: {
-    display: 'flex',
-    gap: '10px'
-  },
-  recStat: {
-    backgroundColor: '#f3e5f5',
-    padding: '5px 12px',
-    borderRadius: '8px',
-    fontSize: '0.82rem',
-    color: '#4a148c',
-    fontWeight: '600'
-  }
+  emptyBox: { textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '20px', boxShadow: '0 4px 15px rgba(74,20,140,0.08)', maxWidth: '500px', margin: '0 auto' },
+  goBtn: { display: 'inline-block', backgroundColor: '#4a148c', color: 'white', padding: '12px 28px', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.95rem', textDecoration: 'none' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '35px' },
+  statCard: { background: 'white', padding: '20px', borderRadius: '14px', textAlign: 'center', boxShadow: '0 4px 12px rgba(74,20,140,0.08)' },
+  statNum: { fontSize: '2rem', fontWeight: 'bold', color: '#4a148c', margin: 0 },
+  statLabel: { fontSize: '0.8rem', color: '#888', margin: '5px 0 0' },
+  dateHeader: { backgroundColor: '#4a148c', color: 'white', padding: '10px 18px', borderRadius: '10px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.95rem' },
+  recCard: { background: 'white', padding: '16px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(74,20,140,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
+  recLeft: { display: 'flex', alignItems: 'center', gap: '14px', flex: 1 },
+  typeTag: { padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap' },
+  recTitle: { margin: 0, fontWeight: 'bold', color: '#311b92', fontSize: '0.95rem' },
+  recTime: { margin: '3px 0 0', color: '#888', fontSize: '0.82rem' },
+  recStat: { backgroundColor: '#f3e5f5', padding: '5px 12px', borderRadius: '8px', fontSize: '0.82rem', color: '#4a148c', fontWeight: '600' }
 };
 
 export default History;

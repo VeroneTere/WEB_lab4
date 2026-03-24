@@ -1,6 +1,16 @@
+// src/pages/Progress.jsx
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import ProgressForm from '../components/ProgressForm';
 
 function Progress() {
+  const { user } = useAuth();
+
+  // Якщо не авторизований — перенаправляємо на login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <section style={{ padding: '40px 5%' }}>
       <div style={{ textAlign: 'center', marginBottom: '35px' }}>
@@ -8,7 +18,8 @@ function Progress() {
           Мій прогрес
         </h2>
         <p style={{ color: '#666', marginTop: '8px' }}>
-          Відстежуй кроки та вагу щодня
+          Вітаємо, <strong style={{ color: '#4a148c' }}>{user.email}</strong>! 
+          Відстежуй свої результати.
         </p>
       </div>
       <ProgressForm />
