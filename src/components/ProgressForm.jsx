@@ -1,36 +1,75 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { db } from '../firebase'; // імпортуємо базу даних
+import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 
-const INITIAL = [
-  { id: 1, date: '13.03', steps: 8500, weight: 70.2, cal: 340 },
-  { id: 2, date: '14.03', steps: 10200, weight: 70.0, cal: 408 },
-  { id: 3, date: '15.03', steps: 9100, weight: 69.8, cal: 364 },
-  { id: 4, date: '16.03', steps: 11500, weight: 69.6, cal: 460 },
-  { id: 5, date: '17.03', steps: 8800, weight: 69.5, cal: 352 }
-];
-
-function ProgressForm() {
-  const [records, setRecords] = useState(INITIAL);
+function ProgressForm({ user }) {
+  const [records, setRecords] = useState([]);
   const [date, setDate] = useState('');
   const [steps, setSteps] = useState('');
   const [weight, setWeight] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // 1. Завантаження даних з Firebase при старті
+  useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        // Запит: шукаємо в колекції "progress" записи поточного користувача, сортуємо за датою
+        const q = query(
+          collection(db, "progress"),
+          where("userId", "==", user.uid)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Сортуємо вручну за датою (або можна налаштувати індекси у Firebase)
+        setRecords(data.sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate)));
+      } catch (e) {
+        console.error("Помилка отримання даних: ", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) fetchRecords();
+  }, [user]);
 
   const maxSteps = Math.max(...records.map(r => r.steps), 1);
 
-  const handleAdd = (e) => {
+  // 2. Збереження нового запису в Firebase
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!date || !steps || !weight) return;
 
-    const formatted = date.slice(5).split('-').reverse().join('.');
+    const formattedDate = date.slice(5).split('-').reverse().join('.');
+    
     const newRec = {
-      id: Date.now(),
-      date: formatted,
+      userId: user.uid, // Прив'язуємо до користувача
+      date: formattedDate,
+      rawDate: date, // для зручного сортування
       steps: parseInt(steps),
       weight: parseFloat(weight),
       cal: Math.round(parseInt(steps) * 0.04)
     };
-    setRecords(prev => [...prev, newRec]);
-    setDate(''); setSteps(''); setWeight('');
+
+    try {
+      // Додаємо в хмару
+      const docRef = await addDoc(collection(db, "progress"), newRec);
+      
+      // Оновлюємо локальний стейт, щоб одразу побачити результат
+      setRecords(prev => [...prev, { ...newRec, id: docRef.id }].sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate)));
+      
+      // Очищуємо форму
+      setDate(''); setSteps(''); setWeight('');
+    } catch (e) {
+      alert("Помилка при збереженні: " + e.message);
+    }
   };
+
+  if (loading) return <p>Завантаження даних...</p>;
 
   const inp = {
     width: '100%',
@@ -44,7 +83,6 @@ function ProgressForm() {
 
   return (
     <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
-
       {/* Форма */}
       <div style={s.box}>
         <h3 style={s.boxTitle}>📋 Записати показники</h3>
@@ -62,14 +100,14 @@ function ProgressForm() {
             <input type="number" step="0.1" placeholder="напр: 68.5" value={weight} onChange={e => setWeight(e.target.value)} style={inp} required />
           </div>
           <button type="submit" style={s.saveBtn}>
-            💾 Зберегти
+            💾 Зберегти в хмару
           </button>
         </form>
       </div>
 
       {/* Графік + таблиця */}
       <div style={{ ...s.box, flex: 2, minWidth: '300px' }}>
-        <h3 style={s.boxTitle}>📊 Графік кроків</h3>
+        <h3 style={s.boxTitle}>📊 Твій прогрес (з Firebase)</h3>
 
         {/* Стовпчаста діаграма */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '160px', borderBottom: '2px solid #ede7f6', marginBottom: '8px' }}>
@@ -110,6 +148,7 @@ function ProgressForm() {
               ))}
             </tbody>
           </table>
+          {records.length === 0 && <p style={{textAlign: 'center', padding: '20px'}}>Даних поки немає. Додай свій перший результат!</p>}
         </div>
       </div>
     </div>
