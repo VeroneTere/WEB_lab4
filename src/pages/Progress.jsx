@@ -5,7 +5,6 @@ import ProgressForm from '../components/ProgressForm';
 function Progress() {
   const { user, loading } = useAuth(); // Додаємо loading, щоб уникнути помилкового редіректу
 
-  // Поки Firebase перевіряє сесію, показуємо заглушку
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '50px' }}>Завантаження...</div>;
   }

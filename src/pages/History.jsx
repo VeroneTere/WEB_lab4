@@ -37,7 +37,7 @@ function History() {
     <section style={{ padding: '40px 5%' }}>
       <div style={{ textAlign: 'center', marginBottom: '35px' }}>
         <h2 style={{ fontSize: '2rem', color: '#4a148c', margin: 0 }}>
-          Мій журнал (Firebase 🔥)
+          Мій журнал
         </h2>
         <p style={{ color: '#666', marginTop: '8px' }}>
           Особистий журнал користувача <strong style={{color: '#4a148c'}}>{user.email}</strong>

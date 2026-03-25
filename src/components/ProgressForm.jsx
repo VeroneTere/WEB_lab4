@@ -107,7 +107,7 @@ function ProgressForm({ user }) {
 
       {/* Графік + таблиця */}
       <div style={{ ...s.box, flex: 2, minWidth: '300px' }}>
-        <h3 style={s.boxTitle}>📊 Твій прогрес (з Firebase)</h3>
+        <h3 style={s.boxTitle}>📊 Твій прогрес</h3>
 
         {/* Стовпчаста діаграма */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '160px', borderBottom: '2px solid #ede7f6', marginBottom: '8px' }}>
