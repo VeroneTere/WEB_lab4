@@ -5,6 +5,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const path = require("path");
 
 const JWT_SECRET = "my_super_secret_key_123";
 
@@ -348,6 +349,12 @@ app.get("/profile", verifyToken, async (req, res) => {
     message: "Це захищені дані профілю",
     user: req.user
   });
+});
+
+app.use(express.static(path.join(__dirname, "../build")));
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../build", "index.html"));
 });
 
 // ЗАПУСК СЕРВЕРА

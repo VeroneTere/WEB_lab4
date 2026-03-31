@@ -6,19 +6,16 @@ function ProgressForm({ user }) {
   const [steps, setSteps] = useState('');
   const [weight, setWeight] = useState('');
   const [loading, setLoading] = useState(true);
+  const [groupedData, setGroupedData] = useState({});
 
-  // 1. ЗАВАНТАЖЕННЯ ДАНИХ ЧЕРЕЗ BACKEND (Завдання 3)
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        // Звертаємося до нашого Node.js сервера
         const response = await fetch("http://localhost:5000/api/progress");
         const data = await response.json();
         
-        // Фільтруємо дані для конкретного користувача
         const userRecords = data.filter(r => r.userId === user.uid);
         
-        // Сортуємо за датою
         setRecords(userRecords.sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate)));
       } catch (e) {
         console.error("Помилка отримання даних з бекенду: ", e);
@@ -49,7 +46,6 @@ function ProgressForm({ user }) {
     };
 
     try {
-      // Відправляємо POST запит на наш сервер
       const response = await fetch("http://localhost:5000/api/progress", {
         method: "POST",
         headers: {
@@ -61,10 +57,8 @@ function ProgressForm({ user }) {
       if (response.ok) {
         const savedDoc = await response.json();
         
-        // Оновлюємо інтерфейс даними, які повернув сервер
         setRecords(prev => [...prev, { ...newRec, id: savedDoc.id }].sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate)));
         
-        // Очищуємо форму
         setDate(''); setSteps(''); setWeight('');
       }
     } catch (e) {
