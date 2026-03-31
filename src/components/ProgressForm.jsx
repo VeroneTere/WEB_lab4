@@ -11,7 +11,7 @@ function ProgressForm({ user }) {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/progress");
+        const response = await fetch("/api/progress");
         const data = await response.json();
         
         const userRecords = data.filter(r => r.userId === user.uid);

@@ -15,13 +15,12 @@ export function WorkoutProvider({ children }) {
         return;
       }
       try {
-        // Викликаємо наш API
-        const response = await fetch("http://localhost:5000/api/history");
+        // ВИПРАВЛЕНО 1: Прибрали http://localhost:5000
+        const response = await fetch("/api/history");
         if (!response.ok) throw new Error("Помилка сервера");
         
         const data = await response.json();
         
-        // Фільтруємо за поточним користувачем та сортуємо (свіжі зверху)
         const userHistory = data
           .filter(item => item.userId === user.uid)
           .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -37,7 +36,6 @@ export function WorkoutProvider({ children }) {
 
   // 2. ЗБЕРЕЖЕННЯ ТРЕНУВАННЯ (POST)
   const addToHistory = async (workout) => {
-    // Якщо користувач не залогінений, нічого не робимо
     if (!user) {
       console.error("Користувач не авторизований");
       return;
@@ -45,14 +43,13 @@ export function WorkoutProvider({ children }) {
     
     const now = new Date();
     
-    // Формуємо об'єкт строго за структурою, яку очікує база
     const record = {
-      userId: user.uid, // Прив'язка до аккаунту
+      userId: user.uid,
       workoutId: workout.id || workout.workoutId || String(Date.now()),
       title: workout.title || "Тренування",
       type: workout.type || "Інше",
-      calories: Number(workout.calories) || 0, // Перетворюємо на число
-      time: Number(workout.time) || 0,         // Перетворюємо на число
+      calories: Number(workout.calories) || 0,
+      time: Number(workout.time) || 0,
       createdAt: now.toISOString(),
       completedDate: now.toLocaleDateString('uk-UA'),
       completedTime: now.toLocaleTimeString('uk-UA', {
@@ -63,7 +60,8 @@ export function WorkoutProvider({ children }) {
     try {
       console.log("Відправка даних на сервер:", record);
 
-      const response = await fetch("http://localhost:5000/api/workouts", {
+      // ВИПРАВЛЕНО 2: Змінили /api/history на /api/workouts
+      const response = await fetch("/api/workouts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +72,6 @@ export function WorkoutProvider({ children }) {
       const responseData = await response.json();
 
       if (response.ok) {
-        // Оновлюємо локальний стан, щоб дані з'явилися миттєво без перезавантаження
         const newRecordWithId = { ...record, id: responseData.id };
         setHistory(prev => [newRecordWithId, ...prev]);
         return true; 
