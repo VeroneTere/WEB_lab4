@@ -1,4 +1,4 @@
-// src/App.jsx
+import { useEffect, useState } from 'react'; // Додано useState та useEffect
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { WorkoutProvider } from './context/WorkoutContext';
 import { AuthProvider } from './context/AuthContext';
@@ -12,26 +12,44 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 function App() {
+  // Стан для зберігання повідомлення від сервера
+  const [backendMessage, setBackendMessage] = useState("Завантаження...");
+
+  // Етап інтеграції (Рис. 5.9 з методички)
+  useEffect(() => {
+    fetch("http://localhost:5000/api/message")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("", data);
+        setBackendMessage(data.message); // Зберігаємо "Hello from the backend!"
+      })
+      .catch((error) => {
+        console.error("Помилка запиту:", error);
+        setBackendMessage();
+      });
+  }, []);
+
   return (
-    // AuthProvider — найзовнішній, бо всі компоненти потребують авторизацію
     <AuthProvider>
       <WorkoutProvider>
         <BrowserRouter>
           <Navbar />
+          
+          {/* Плашка з повідомленням від сервера для звіту */}
+          
+
           <div style={{ backgroundColor: '#f3e5f5', minHeight: '100vh' }}>
             <Routes>
-              {/* Публічні сторінки */}
-              <Route path="/"            element={<Home />} />
+              <Route path="/" element={<Home />} />
               <Route path="/workout/:id" element={<WorkoutDetail />} />
-              <Route path="/nutrition"   element={<Nutrition />} />
-              <Route path="/login"       element={<Login />} />
-              <Route path="/register"    element={<Register />} />
-
-              {/* Захищені сторінки (перевірка всередині компонента) */}
-              <Route path="/progress"    element={<Progress />} />
-              <Route path="/history"     element={<History />} />
+              <Route path="/nutrition" element={<Nutrition />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/progress" element={<Progress />} />
+              <Route path="/history" element={<History />} />
             </Routes>
           </div>
+
           <footer style={{
             backgroundColor: '#4a148c',
             color: 'white',

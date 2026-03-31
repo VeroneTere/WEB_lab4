@@ -1,26 +1,56 @@
+import { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useWorkoutHistory } from '../context/WorkoutContext';
 
 function History() {
-  const { user, loading: authLoading } = useAuth(); // Додаємо loading з авторизації
-  const { history } = useWorkoutHistory();
+  const { user, loading: authLoading } = useAuth();
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Захист роуту: поки перевіряємо сесію — чекаємо
-  if (authLoading) {
-    return <div style={{ textAlign: 'center', padding: '50px', color: '#4a148c' }}>Синхронізація з хмарою...</div>;
+  // ІНТЕГРАЦІЯ З БЕКЕНДОМ (Завдання 3)
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      
+      try {
+        // Запит до твого Node.js сервера
+        const response = await fetch("http://localhost:5000/api/history");
+        const data = await response.json();
+        
+        // Фільтруємо історію, щоб показувати лише тренування поточного користувача
+        const userHistory = data.filter(item => item.userId === user.uid);
+        setHistory(userHistory);
+      } catch (error) {
+        console.error("Помилка завантаження історії з бекенду:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [user]);
+
+  // Захист роуту
+  if (authLoading || (loading && user)) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px', color: '#4a148c', fontSize: '1.2rem' }}>
+        <div className="spinner"></div> {/* Можна додати CSS спінер */}
+        <p></p>
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  const totalCal = history.reduce((s, r) => s + r.calories, 0);
-  const totalMin = history.reduce((s, r) => s + r.time, 0);
+  // Розрахунок статистики
+  const totalCal = history.reduce((s, r) => s + (Number(r.calories) || 0), 0);
+  const totalMin = history.reduce((s, r) => s + (Number(r.time) || 0), 0);
 
   // Групування за датою
   const grouped = history.reduce((acc, rec) => {
-    const date = rec.completedDate;
+    const date = rec.completedDate || "Без дати";
     if (!acc[date]) acc[date] = [];
     acc[date].push(rec);
     return acc;
@@ -40,24 +70,21 @@ function History() {
           Мій журнал
         </h2>
         <p style={{ color: '#666', marginTop: '8px' }}>
-          Особистий журнал користувача <strong style={{color: '#4a148c'}}>{user.email}</strong>
+         <strong style={{color: '#4a148c'}}>{user.email}</strong>
         </p>
       </div>
 
       {history.length === 0 ? (
         <div style={s.emptyBox}>
           <p style={{ fontSize: '3rem', margin: 0 }}>🏋️</p>
-          <h3 style={{ color: '#4a148c', margin: '10px 0' }}>
-            Історія порожня
-          </h3>
+          <h3 style={{ color: '#4a148c', margin: '10px 0' }}>Історія порожня</h3>
           <p style={{ color: '#888', margin: '0 0 20px' }}>
-            Виконайте своє перше тренування, щоб воно з'явилося тут назавжди.
+            Виконайте тренування, і сервер Node.js збереже його в базу.
           </p>
           <Link to="/" style={s.goBtn}>→ Обрати тренування</Link>
         </div>
       ) : (
         <>
-          {/* Статистика на основі даних з БД */}
           <div style={s.statsRow}>
             <div style={s.statCard}>
               <p style={s.statNum}>{history.length}</p>
@@ -81,9 +108,7 @@ function History() {
             <div key={date} style={{ marginBottom: '30px' }}>
               <div style={s.dateHeader}>
                 <span>📅 {date}</span>
-                <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-                  {recs.length} занять
-                </span>
+                <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>{recs.length} занять</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {recs.map(rec => {
@@ -118,8 +143,8 @@ function History() {
   );
 }
 
+// Стилі об'єкта s залишаємо без змін...
 const s = {
-  // Стилі залишаємо твої, вони чудові
   emptyBox: { textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '20px', boxShadow: '0 4px 15px rgba(74,20,140,0.08)', maxWidth: '500px', margin: '0 auto' },
   goBtn: { display: 'inline-block', backgroundColor: '#4a148c', color: 'white', padding: '12px 28px', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.95rem', textDecoration: 'none' },
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '35px' },
